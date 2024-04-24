@@ -30,10 +30,6 @@ ENV GATLING_OPTS "-F -S -p 8000 -c /srv"
 
 RUN echo "Hello World" > /srv/index.html
 
-RUN groupadd -r user \
-  && useradd -r -g user user
-USER user
-
 EXPOSE 8000
 
 CMD gatling ${GATLING_OPTS}
