@@ -1,8 +1,11 @@
-FROM debian:bookworm-slim as build-env
+FROM debian:trixie-slim as build-env
 
-RUN DEBIAN_FRONTEND=noninteractive apt update && DEBIAN_FRONTEND=noninteractive apt upgrade -y \
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt upgrade --yes \
   # install dependencies
-  && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends make gcc cvs zlib1g-dev openssl curl \
+  && apt install -y --no-install-recommends --no-install-suggests make gcc cvs zlib1g-dev openssl \
+  && apt install -y --no-install-recommends --no-install-suggests curl \
   # make image smaller
   && rm -rf "/var/lib/apt/lists/*" \
   && rm -rf /var/cache/apt/archives \
@@ -25,6 +28,22 @@ RUN cvs -d :pserver:cvs@cvs.fefe.de:/cvs -z9 co dietlibc \
   && diet make gatling \
   && install gatling /usr/local/bin \
   && rm -rf /tmp/*
+
+FROM debian:trixie-slim as prod-env
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt upgrade --yes \
+  # install dependencies
+  && apt install -y --no-install-recommends --no-install-suggests curl \
+  # make image smaller
+  && rm -rf "/var/lib/apt/lists/*" \
+  && rm -rf /var/cache/apt/archives \
+  && rm -rf /tmp/* /var/tmp/*
+
+COPY --from=build-env /usr/local/bin/* /usr/local/bin/
+
+WORKDIR /srv
 
 ENV GATLING_OPTS "-F -S -p 8000 -c /srv"
 
